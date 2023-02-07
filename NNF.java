@@ -1,7 +1,7 @@
-import javax.sound.sampled.Line;
+package cnfBuilder;
+
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Stack;
 
 public class NNF {
@@ -18,6 +18,19 @@ public class NNF {
     static boolean done = false;
 
     public static void main(String... args){
+        PostfixNotation pol = new PostfixNotation();
+
+        pol.setOperators(new String[]{String.valueOf(lor), String.valueOf(land),  String.valueOf(lnot)});
+        pol.setLeftAssociative(new String[]{String.valueOf(lor), String.valueOf(land)});
+        pol.setPrecedence(new String[][]{ {String.valueOf(lor)}, {String.valueOf(land)},{String.valueOf(lnot)}});
+        pol.setDelims(new char[]{lnot, lor, land , ')', '('});
+        pol.addFunction(String.valueOf(lcnf), String.valueOf(lnnf));
+
+        //pol.toPostfixNotation("k(f(!a*!(bvc)))");
+        pol.toPostfixNotation("f(!(((AvB)*(CvD))))");
+        System.out.print(pol + " - ");
+        System.out.println( pol.toInfixNotation());
+        /*
         String str = "(!(!(B*(!A*!C))*(((!AvC)*B)v(C*A))))*!C";
         //str = "(((!(B*(!A*!C)))*(((!AvC)*B)v(C*A))))*!C";
         str = "k(f((((!(B*(!A*!C)))*(((!AvC)*B)v(C*A))))*!C))";
@@ -27,7 +40,7 @@ public class NNF {
         printToCNF(str);
         printToCNF("k(f((Av!B)*B*!A))");
         printToCNF("k(f((Av!B)*B*!B))");
-
+        */
 
 
     }
