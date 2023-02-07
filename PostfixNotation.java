@@ -98,12 +98,12 @@ public class PostfixNotation {
             return new LinkedList<String>();
         }
         LinkedList<String> result = new LinkedList<>();
-        LinkedList<Double> posT = new LinkedList<>();
+        LinkedList<Integer> posT = new LinkedList<>();
         t = t.replaceAll(" ", "");
         char[] chars = t.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             if(isDelim(chars[i]))
-                posT.add(i+0d);
+                posT.add(i);
         }
         if (posT.size() == 0){
             result.add(t);
@@ -112,17 +112,17 @@ public class PostfixNotation {
         int pos0 = (int) posT.get(0).doubleValue();
         if(posT.get(0) != 0)
             result.add(t.substring(0, pos0));
-        result.add(String.valueOf(chars[(int)posT.get(0).doubleValue()]));
+        result.add(String.valueOf(chars[posT.get(0)]));
 
         for (int i = 1; i < posT.size(); i++) {
-            int pos1 = (int) posT.get(i).doubleValue();
+            int pos1 = posT.get(i);
             if (pos0 + 1 != pos1)
                 result.add(t.substring(pos0 + 1, pos1));
             result.add(String.valueOf(chars[pos1]));
             pos0 = pos1;
         }
-        if((int)(posT.getLast() + 0) != chars.length - 1 )
-            result.add(t.substring((int)(posT.getLast() + 1), chars.length));
+        if(posT.getLast() != chars.length - 1 )
+            result.add(t.substring((posT.getLast() + 1), chars.length));
         return result;
 
 
