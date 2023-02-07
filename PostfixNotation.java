@@ -10,8 +10,8 @@ public class PostfixNotation {
     private String[] functions = new String[0];
     private String[] argumentSeparators = new String[0];
     private String[][] precedences = new String[0][];
-    private String leftParentheses = "(";
-    private String rightParentheses = ")";
+    private String[] leftParentheses = new String[]{"("};
+    private String[] rightParentheses = new String[]{")"};
     public PostfixNotation(){
     }
 
@@ -21,7 +21,19 @@ public class PostfixNotation {
     }
 
     public void setDelims(char[] delims) {
+        if(delims == null)
+            return;
         this.delims = delims;
+    }
+    public void addDelims(char... delims) {
+        char[] result = new char[this.delims.length+delims.length];
+        for (int i = 0; i < this.delims.length; i++) {
+            result[i] = this.delims[i];
+        }
+        for (int j = 0; j < delims.length; j++) {
+            result[this.delims.length+j] = delims[j];
+        }
+        this.delims = result;
     }
 
     private boolean isDelim(char token){
@@ -33,31 +45,85 @@ public class PostfixNotation {
     }
 
     public void setOperators(String[] ops) {
+        if(ops == null)
+            return;
         this.operators = ops;
     }
     private boolean isOperator(String token){
         return contains(operators, token);
     }
+    public void addOperator(String... ops){
+        this.operators = add(this.operators, ops);
+    }
 
     public void setFunction(String[] funcs){
+        if(funcs == null)
+            return;
         this.functions = funcs;
+    }
+    public void addFunction(String... func){
+        this.functions = add(this.functions, func);
     }
     private boolean isFunction(String token){
         return contains(functions, token);
     }
 
+
     public void setLeftAssociative(String[] leftAssociative){
+        if(leftAssociative == null)
+            return;
         this.leftAssociative = leftAssociative;
+    }
+    public void addLeftAssociative(String... leftAssociative){
+        add(this.leftAssociative, leftAssociative);
     }
     private boolean isLeftAssociative(String token){
         return contains(leftAssociative, token);
     }
-    public void setArgumentSeparator(String[] separators){
-        argumentSeparators = separators;
-    }
 
+
+    public void setArgumentSeparator(String[] separators){
+        if(separators == null)
+            return;
+        this.argumentSeparators = separators;
+    }
+    public void addArgumentSeparator(String ... separators){
+        add(this.argumentSeparators, separators);
+    }
     private boolean isArgumentSeparator(String token){
         return contains(argumentSeparators, token);
+    }
+    public void setLeftParentheses(String[] leftParentheses){
+        if(leftParentheses == null)
+            return;
+        this.leftParentheses = leftParentheses;
+    }
+    public void addLeftParentheses(String... leftParentheses){
+        add(this.leftParentheses, leftParentheses);
+    }
+    private boolean isLeftParentheses(String token){
+        return contains(leftParentheses, token);
+    }
+    private String getLeftParenthesis(){
+        if (leftParentheses.length > 0)
+            return leftParentheses[0];
+        return "";
+    }
+    public void setRightParentheses(String[] rightParentheses){
+        if(rightParentheses == null)
+            return;
+        this.rightParentheses = rightParentheses;
+    }
+    public void addRightParentheses(String... rightParentheses){
+        add(this.rightParentheses, rightParentheses);
+    }
+    private boolean isRightParentheses(String token){
+        return contains(rightParentheses, token);
+    }
+    private String getRightParenthesis(){
+        if (rightParentheses.length > 0)
+            return rightParentheses[0];
+        return "";
     }
 
     public void setPrecedence(String[]... precedences){
@@ -65,7 +131,7 @@ public class PostfixNotation {
     }
 
     private boolean isLiteral(String token){
-        return !(token.equals(leftParentheses) || token.equals(rightParentheses) || isFunction(token) || isOperator(token) || isArgumentSeparator(token));
+        return !(isLeftParentheses(token) || isRightParentheses(token)|| isFunction(token) || isOperator(token) || isArgumentSeparator(token));
     }
 
     private int getPrecedence(String token){
@@ -77,6 +143,17 @@ public class PostfixNotation {
             }
         }
         return precedence;
+    }
+
+    private static String[] add(String[] arr1, String[] arr2){
+        String[] result = new String[arr1.length+arr2.length];
+        for (int i = 0; i < arr1.length; i++) {
+            result[i] = arr1[i];
+        }
+        for (int j = 0; j < arr2.length; j++) {
+            result[arr1.length+j] = arr2[j];
+        }
+        return result;
     }
 
     private static boolean contains(String[] array, String token){
@@ -143,12 +220,23 @@ public class PostfixNotation {
 
         String op = postfix.removeLast();
         if(isLeftAssociative(op)){
-            String rightSide = toInfixNotation(postfix) + result;
-            String leftSide  = toInfixNotation(postfix)+ result;
+            String opR = postfix.getLast();
+            String rightSide = toInfixNotation(postfix);
+            String opL = postfix.getLast();
+            String leftSide  = toInfixNotation(postfix);
+            if(!isLiteral(opR) && getPrecedence(op) > getPrecedence(opR))
+                rightSide = getLeftParenthesis() + rightSide + getRightParenthesis();
+            if(!isLiteral(opL) && getPrecedence(op) > getPrecedence(opL))
+                leftSide = getLeftParenthesis() + leftSide + getRightParenthesis();
             result = leftSide + op + rightSide;
-            result =  leftParentheses + result + rightParentheses;
+        } else if(isFunction(op)){
+            result += op + getLeftParenthesis() + toInfixNotation(postfix) + getRightParenthesis();
         } else {
-            result += op + leftParentheses + toInfixNotation(postfix) + rightParentheses;
+            String opR = postfix.getLast();
+            result = toInfixNotation(postfix);
+            if(!isLiteral(opR) && getPrecedence(op) > getPrecedence(opR))
+                result = getLeftParenthesis() + result + getRightParenthesis();
+            result = op + result;
         }
 
         return result;
@@ -164,8 +252,8 @@ public class PostfixNotation {
             int stackPrecedence = 0;
 
             boolean isLeftAssociative = isLeftAssociative(token);
-            boolean isLeftParentheses = token.equals(leftParentheses);
-            boolean isRightParentheses = token.equals(rightParentheses);
+            boolean isLeftParentheses = isLeftParentheses(token);
+            boolean isRightParentheses = isRightParentheses(token);
             boolean isFunction = isFunction(token);
             boolean isOperator = isOperator(token);
             boolean isArgumentSeparator = isArgumentSeparator(token);
@@ -176,7 +264,7 @@ public class PostfixNotation {
             if (!stack.isEmpty()) {
                 String st = stack.peek();
                 stackIsOperator = isOperator(st);
-                stackIsLeftParentheses = st.equals(leftParentheses);
+                stackIsLeftParentheses = isLeftParentheses(st);
             }
             //token-precedence | stack-precedence
             {
@@ -216,7 +304,7 @@ public class PostfixNotation {
                     stackIsLeftParentheses = false;
                     if(!stack.isEmpty()) {
                         String st = stack.peek();
-                        stackIsLeftParentheses = st.equals(leftParentheses);
+                        stackIsLeftParentheses = isLeftParentheses(st);
                     }
                 }
             }
@@ -231,7 +319,7 @@ public class PostfixNotation {
                     stackIsLeftParentheses = false;
                     if(!stack.isEmpty()) {
                         String st = stack.peek();
-                        stackIsLeftParentheses = st.equals(leftParentheses);
+                        stackIsLeftParentheses = isLeftParentheses(st);
                     }
                 }
                 stack.pop();
@@ -249,7 +337,7 @@ public class PostfixNotation {
             boolean stackIsLeftParentheses = false;
             if(!stack.isEmpty()) {
                 String st = stack.peek();
-                stackIsLeftParentheses = st.equals(leftParentheses);
+                stackIsLeftParentheses = isLeftParentheses(st);
             }
             if(stackIsLeftParentheses)
                 throw new IllegalArgumentException();
