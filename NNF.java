@@ -20,12 +20,14 @@ public class NNF {
     public static void main(String... args){
         PostfixNotation pol = new PostfixNotation();
 
-        pol.setOperators(new String[]{String.valueOf(lor), String.valueOf(land), String.valueOf(lnnf), String.valueOf(lcnf), String.valueOf(lnot)});
+        pol.setOperators(new String[]{String.valueOf(lor), String.valueOf(land),  String.valueOf(lnot)});
         pol.setLeftAssociative(new String[]{String.valueOf(lor), String.valueOf(land)});
-        pol.setPrecedence(new String[][]{ {String.valueOf(lor)}, {String.valueOf(land)},{String.valueOf(lnnf), String.valueOf(lcnf), String.valueOf(lnot)}});
-        pol.setDelims(new char[]{lnot, lor, land, lnnf, lcnf, ')', '('});
-        pol.test();
-        pol.toPostfixNotation("k(f(!a*!(bvc)))");
+        pol.setPrecedence(new String[][]{ {String.valueOf(lor)}, {String.valueOf(land)},{String.valueOf(lnot)}});
+        pol.setDelims(new char[]{lnot, lor, land , ')', '('});
+        pol.addFunction(String.valueOf(lcnf), String.valueOf(lnnf));
+
+        //pol.toPostfixNotation("k(f(!a*!(bvc)))");
+        pol.toPostfixNotation("f(!(((AvB)*(CvD))))");
         System.out.print(pol + " - ");
         System.out.println( pol.toInfixNotation());
         /*
