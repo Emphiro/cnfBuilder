@@ -23,11 +23,14 @@ public class NNF {
         pol.setOperators(new String[]{String.valueOf(lor), String.valueOf(land),  String.valueOf(lnot)});
         pol.setLeftAssociative(new String[]{String.valueOf(lor), String.valueOf(land)});
         pol.setPrecedence(new String[][]{ {String.valueOf(lor)}, {String.valueOf(land)},{String.valueOf(lnot)}});
-        pol.setDelims(new char[]{lnot, lor, land , ')', '('});
+        pol.setDelims(new char[]{lnot, lor, land , ')', '(', ','});
         pol.addFunction(String.valueOf(lcnf), String.valueOf(lnnf));
-
-        //pol.toPostfixNotation("k(f(!a*!(bvc)))");
-        pol.toPostfixNotation("f(!(((AvB)*(CvD))))");
+        pol.addFunction("forall", "exists");
+        pol.addArgumentSeparator(",");
+        pol.toPostfixNotation("forall(x, !(!a*!(bvc)))");
+        pol.addNumOp("forall", 2);
+        //pol.toPostfixNotation("f(!(((AvB)*(CvD))))");
+        pol.test();
         System.out.print(pol + " - ");
         System.out.println( pol.toInfixNotation());
         /*

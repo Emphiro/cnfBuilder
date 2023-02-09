@@ -3,15 +3,17 @@ package cnfBuilder;
 import java.util.*;
 
 public class PostfixNotation {
-    private Queue<String> postfixNotation = new LinkedList<>();
+    private LinkedList<String> postfixNotation = new LinkedList<>();
     private char[] delims = new char[0];
     private String[] operators = new String[0];
     private String[] leftAssociative = new String[0];
     private String[] functions = new String[0];
     private String[] argumentSeparators = new String[0];
     private String[][] precedences = new String[0][];
+
     private String[] leftParentheses = new String[]{"("};
     private String[] rightParentheses = new String[]{")"};
+    private HashMap<String, Integer> numOps = new HashMap<>();
     public PostfixNotation(){
     }
 
@@ -67,6 +69,21 @@ public class PostfixNotation {
     private boolean isFunction(String token){
         return contains(functions, token);
     }
+    public int getNumOp(String token){
+        if(numOps.containsKey(token))
+            return numOps.get(token);
+        if(contains(leftAssociative, token))
+            return 2;
+        if(!isLiteral(token))
+            return 1;
+        return 0;
+    }
+    public void addNumOp(String op, int num){
+        numOps.put(op, num);
+    }
+    public void setNumOp(HashMap<String, Integer> numOps){
+        this.numOps = numOps;
+    }
 
 
     public void setLeftAssociative(String[] leftAssociative){
@@ -88,10 +105,15 @@ public class PostfixNotation {
         this.argumentSeparators = separators;
     }
     public void addArgumentSeparator(String ... separators){
-        add(this.argumentSeparators, separators);
+        this.argumentSeparators = add(this.argumentSeparators, separators);
     }
     private boolean isArgumentSeparator(String token){
         return contains(argumentSeparators, token);
+    }
+    private String getArgumentSeparator(){
+        if (argumentSeparators.length > 0)
+            return argumentSeparators[0];
+        return "";
     }
     public void setLeftParentheses(String[] leftParentheses){
         if(leftParentheses == null)
@@ -165,12 +187,17 @@ public class PostfixNotation {
     }
 
     public void test(){
+        System.out.println("test " + Arrays.toString(argumentSeparators));
+        LinkedList<String>[] children = getChildren();
+        for (LinkedList<String> child : children){
+            System.out.println(Arrays.toString(child.toArray(new String[0])));
+        }
         System.out.printf("pre * :%s pre v :%s\n",getPrecedence("*"), getPrecedence("v"));
     }
 
 
 
-    public LinkedList<String> tokenize(String t){
+    private LinkedList<String> tokenize(String t){
         if(t == null || t.length() == 0) {
             return new LinkedList<String>();
         }
@@ -186,33 +213,80 @@ public class PostfixNotation {
             result.add(t);
             return result;
         }
-        int pos0 = (int) posT.get(0).doubleValue();
+        int pos0 = posT.get(0);
         if(posT.get(0) != 0)
             result.add(t.substring(0, pos0));
+
         result.add(String.valueOf(chars[posT.get(0)]));
 
         for (int i = 1; i < posT.size(); i++) {
             int pos1 = posT.get(i);
             if (pos0 + 1 != pos1)
                 result.add(t.substring(pos0 + 1, pos1));
+
             result.add(String.valueOf(chars[pos1]));
             pos0 = pos1;
         }
         if(posT.getLast() != chars.length - 1 )
             result.add(t.substring((posT.getLast() + 1), chars.length));
         return result;
-
-
     }
+    public static LinkedList<String> combineLists(LinkedList<String>[] list){
+        LinkedList<String> result = new LinkedList<>();
+        for (int i = 0; i < list.length; i++) {
+            result.addAll(list[i]);
+        }
+        return result;
+    }
+
+    public LinkedList<String>[] getChildren(){
+        return getChildren(postfixNotation);
+    }
+
+    public LinkedList<String>[] getChildren(LinkedList<String> postfix){
+        postfix = new LinkedList<>(postfix);
+        String op = postfix.removeLast();
+        LinkedList<String>[] result = new LinkedList[1+getNumOp(op)];
+        result[getNumOp(op)] = new LinkedList<>();
+        result[getNumOp(op)].add(op);
+        for (int i = 1; i <= getNumOp(op); i++) {
+            result[result.length-i-1] = getChild(postfix);
+        }
+        return result;
+    }
+
+    private LinkedList<String> getChild(LinkedList<String> postfix){
+        LinkedList<String> result = new LinkedList<>();
+        for(int counter = 1; counter > 0; counter --){
+            String nextToken = postfix.removeLast();
+            counter += getNumOp(nextToken);
+            result.addFirst(nextToken);
+        }
+        return result;
+    }
+
     public String toString(){
         return Arrays.toString(postfixNotation.toArray(new String[0]));
     }
 
     public String toInfixNotation(){
-        LinkedList<String> postfix = new LinkedList<>(postfixNotation);
-        return toInfixNotation(postfix);
+        return toInfixNotation(postfixNotation);
     }
     public String toInfixNotation(LinkedList<String> postfix){
+        postfix = new LinkedList<>(postfix);
+        return toInfixNotationR(postfix);
+    }
+    public void setPostfixNotation(LinkedList<String> postfix){
+        postfixNotation = postfix;
+    }
+    public void setPostfixNotation(LinkedList<String>... postfix){
+        LinkedList<String> result = postfix[0];
+        for (int i = 1; i < postfix.length; i++) {
+            result.addAll(postfix[i]);
+        }
+        setPostfixNotation(result);
+    }
+    private String toInfixNotationR(LinkedList<String> postfix){
         String result = "";
         if(postfix.size() == 1 || isLiteral(postfix.getLast())){
             return postfix.removeLast();
@@ -221,19 +295,25 @@ public class PostfixNotation {
         String op = postfix.removeLast();
         if(isLeftAssociative(op)){
             String opR = postfix.getLast();
-            String rightSide = toInfixNotation(postfix);
+            String rightSide = toInfixNotationR(postfix);
             String opL = postfix.getLast();
-            String leftSide  = toInfixNotation(postfix);
+            String leftSide  = toInfixNotationR(postfix);
             if(!isLiteral(opR) && getPrecedence(op) > getPrecedence(opR))
                 rightSide = getLeftParenthesis() + rightSide + getRightParenthesis();
             if(!isLiteral(opL) && getPrecedence(op) > getPrecedence(opL))
                 leftSide = getLeftParenthesis() + leftSide + getRightParenthesis();
             result = leftSide + op + rightSide;
         } else if(isFunction(op)){
-            result += op + getLeftParenthesis() + toInfixNotation(postfix) + getRightParenthesis();
+            String middle = "";
+            for (int i = 0; i < getNumOp(op); i++) {
+                middle = toInfixNotationR(postfix) + middle;
+                if(i+1 < getNumOp(op))
+                    middle = getArgumentSeparator() + middle;
+            }
+            result = op + getLeftParenthesis() + middle + getRightParenthesis();
         } else {
             String opR = postfix.getLast();
-            result = toInfixNotation(postfix);
+            result = toInfixNotationR(postfix);
             if(!isLiteral(opR) && getPrecedence(op) > getPrecedence(opR))
                 result = getLeftParenthesis() + result + getRightParenthesis();
             result = op + result;
@@ -241,7 +321,7 @@ public class PostfixNotation {
 
         return result;
     }
-    public Queue<String> toPostfixNotation(String t){
+    public LinkedList<String> toPostfixNotation(String t){
         Stack<String> stack = new Stack<>();
         LinkedList<String> output = new LinkedList<>();
         LinkedList<String> tokens = tokenize(t);
